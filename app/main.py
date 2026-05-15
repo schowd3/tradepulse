@@ -1,36 +1,18 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
 from datetime import datetime
 from uuid import uuid4
 from typing import Dict, List
 import random
 
+from app.schemas import OrderCreate, OrderResponse
+
 app = FastAPI(
     title="TradePulse",
     description="Trading Support / Production Monitoring API",
-    version="0.1.0"
+    version="0.2.0"
 )
 
 orders: Dict[str, dict] = {}
-
-
-class OrderCreate(BaseModel):
-    symbol: str
-    side: str
-    quantity: int
-    price: float
-    trader: str
-
-
-class OrderResponse(BaseModel):
-    order_id: str
-    symbol: str
-    side: str
-    quantity: int
-    price: float
-    trader: str
-    status: str
-    created_at: str
 
 
 @app.get("/health")
