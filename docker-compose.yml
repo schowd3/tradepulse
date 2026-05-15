@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: tradepulse-postgres
+    environment:
+      POSTGRES_USER: tradepulse_user
+      POSTGRES_PASSWORD: tradepulse_pass
+      POSTGRES_DB: tradepulse_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tradepulse_user -d tradepulse_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

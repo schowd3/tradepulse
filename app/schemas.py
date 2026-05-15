@@ -1,5 +1,7 @@
-from pydantic import BaseModel, Field
+from datetime import datetime
 from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class OrderCreate(BaseModel):
@@ -11,6 +13,8 @@ class OrderCreate(BaseModel):
 
 
 class OrderResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     order_id: str
     symbol: str
     side: str
@@ -18,4 +22,4 @@ class OrderResponse(BaseModel):
     price: float
     trader: str
     status: str
-    created_at: str
+    created_at: datetime
