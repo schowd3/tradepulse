@@ -9,16 +9,72 @@ from sqlalchemy.orm import Session
 from app.database import Base, engine, get_db
 from app.market_data import BASE_MARKET_DATA, get_all_market_data, get_market_data
 from app.matching_engine import determine_order_status
-from app.models import Order
-from app.schemas import OrderCreate, OrderResponse
+from app.models import Order, OrderEvent
+from app.schemas import OrderCreate, OrderEventResponse, OrderResponse
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="TradePulse",
     description="Trading Support / Production Monitoring API",
-    version="0.4.0"
+    version="0.5.0"
 )
+
+
+def create_order_events(db: Session, order_id: str, final_status: str):
+    events = [
+        OrderEvent(
+            event_id=str(uuid4()),
+            order_id=order_id,
+            event_type="ORDER_RECEIVED",
+            message="Order received by TradePulse API",
+            created_at=datetime.utcnow()
+        )
+    ]
+
+    if final_status == "ACKED":
+        events.append(
+            OrderEvent(
+                event_id=str(uuid4()),
+                order_id=order_id,
+                event_type="ORDER_ACKED",
+                message="Order accepted by simulated venue",
+                created_at=datetime.utcnow()
+            )
+        )
+
+    elif final_status == "FILLED":
+        events.append(
+            OrderEvent(
+                event_id=str(uuid4()),
+                order_id=order_id,
+                event_type="ORDER_ACKED",
+                message="Order accepted by simulated venue",
+                created_at=datetime.utcnow()
+            )
+        )
+        events.append(
+            OrderEvent(
+                event_id=str(uuid4()),
+                order_id=order_id,
+                event_type="ORDER_FILLED",
+                message="Order filled based on simulated market data",
+                created_at=datetime.utcnow()
+            )
+        )
+
+    elif final_status == "REJECTED":
+        events.append(
+            OrderEvent(
+                event_id=str(uuid4()),
+                order_id=order_id,
+                event_type="ORDER_REJECTED",
+                message="Order rejected by simulated matching engine",
+                created_at=datetime.utcnow()
+            )
+        )
+
+    db.add_all(events)
 
 
 @app.get("/health")
@@ -65,6 +121,7 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
     )
 
     db.add(new_order)
+    create_order_events(db, new_order.order_id, status)
     db.commit()
     db.refresh(new_order)
 
@@ -84,6 +141,21 @@ def get_order(order_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Order not found")
 
     return order
+
+
+@app.get("/orders/{order_id}/events", response_model=List[OrderEventResponse])
+def get_order_events(order_id: str, db: Session = Depends(get_db)):
+    order = db.query(Order).filter(Order.order_id == order_id).first()
+
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    return (
+        db.query(OrderEvent)
+        .filter(OrderEvent.order_id == order_id)
+        .order_by(OrderEvent.created_at.asc())
+        .all()
+    )
 
 
 @app.post("/simulate/order", response_model=OrderResponse)
@@ -119,6 +191,7 @@ def simulate_order(db: Session = Depends(get_db)):
     )
 
     db.add(simulated_order)
+    create_order_events(db, simulated_order.order_id, status)
     db.commit()
     db.refresh(simulated_order)
 

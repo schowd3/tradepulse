@@ -23,3 +23,13 @@ class OrderResponse(BaseModel):
     trader: str
     status: str
     created_at: datetime
+
+
+class OrderEventResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    event_id: str
+    order_id: str
+    event_type: str
+    message: str
+    created_at: datetime
