@@ -1,4 +1,18 @@
 services:
+  api:
+    build: .
+    container_name: tradepulse-api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://tradepulse_user:tradepulse_pass@postgres:5432/tradepulse_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+    restart: unless-stopped
+
   postgres:
     image: postgres:16
     container_name: tradepulse-postgres
@@ -15,6 +29,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
 volumes:
   postgres_data:
