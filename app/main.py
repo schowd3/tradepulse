@@ -11,6 +11,8 @@ from app.market_data import BASE_MARKET_DATA, get_all_market_data, get_market_da
 from app.matching_engine import determine_order_status
 from app.models import Order, OrderEvent
 from app.schemas import OrderCreate, OrderEventResponse, OrderResponse
+from app.event_publisher import get_recent_queued_order_events, publish_order_events
+from app.redis_client import check_redis_connection
 
 Base.metadata.create_all(bind=engine)
 
@@ -75,6 +77,7 @@ def create_order_events(db: Session, order_id: str, final_status: str):
         )
 
     db.add_all(events)
+    return events
 
 
 @app.get("/health")
@@ -85,6 +88,27 @@ def health_check():
         "timestamp": datetime.utcnow().isoformat()
     }
 
+@app.get("/redis/health")
+def redis_health_check():
+    if check_redis_connection():
+        return {
+            "status": "UP",
+            "service": "tradepulse-redis"
+        }
+
+    return {
+        "status": "DOWN",
+        "service": "tradepulse-redis"
+    }
+
+
+@app.get("/queue/order-events")
+def get_queued_order_events(limit: int = 10):
+    return {
+        "stream": "tradepulse:order_events",
+        "limit": limit,
+        "events": get_recent_queued_order_events(limit)
+    }
 
 @app.get("/market-data")
 def market_data():
@@ -121,9 +145,11 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
     )
 
     db.add(new_order)
-    create_order_events(db, new_order.order_id, status)
+    events = create_order_events(db, new_order.order_id, status)
     db.commit()
     db.refresh(new_order)
+
+    publish_order_events(new_order, events)
 
     return new_order
 
@@ -191,8 +217,10 @@ def simulate_order(db: Session = Depends(get_db)):
     )
 
     db.add(simulated_order)
-    create_order_events(db, simulated_order.order_id, status)
+    events = create_order_events(db, simulated_order.order_id, status)
     db.commit()
     db.refresh(simulated_order)
+
+    publish_order_events(simulated_order, events)
 
     return simulated_order
