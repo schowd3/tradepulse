@@ -1,11 +1,11 @@
+import time
 from datetime import datetime
 from typing import List
 from uuid import uuid4
 import random
-
-from fastapi import Depends, FastAPI, HTTPException
+from prometheus_client import Counter, Histogram, Gauge, make_asgi_app
+from fastapi import Depends, FastAPI, HTTPException, Request
 from sqlalchemy.orm import Session
-
 from app.database import Base, engine, get_db
 from app.market_data import BASE_MARKET_DATA, get_all_market_data, get_market_data
 from app.matching_engine import determine_order_status
@@ -19,8 +19,71 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="TradePulse",
     description="Trading Support / Production Monitoring API",
-    version="0.5.0"
+    version="0.6.0"
 )
+
+HTTP_REQUESTS_TOTAL = Counter(
+    "tradepulse_http_requests_total",
+    "Total HTTP requests received by TradePulse",
+    ["method", "endpoint", "http_status"]
+)
+
+HTTP_REQUEST_DURATION_SECONDS = Histogram(
+    "tradepulse_http_request_duration_seconds",
+    "HTTP request duration in seconds",
+    ["method", "endpoint"]
+)
+
+ORDERS_CREATED_TOTAL = Counter(
+    "tradepulse_orders_created_total",
+    "Total orders created by TradePulse",
+    ["source", "status", "symbol"]
+)
+
+ORDER_EVENTS_CREATED_TOTAL = Counter(
+    "tradepulse_order_events_created_total",
+    "Total order lifecycle events created",
+    ["event_type"]
+)
+
+def normalize_path(path: str) -> str:
+    if path.startswith("/orders/") and path.endswith("/events"):
+        return "/orders/{order_id}/events"
+
+    if path.startswith("/orders/"):
+        return "/orders/{order_id}"
+
+    return path
+
+@app.middleware("http")
+async def collect_http_metrics(request: Request, call_next):
+    start_time = time.perf_counter()
+
+    response = await call_next(request)
+
+    duration = time.perf_counter() - start_time
+    endpoint = normalize_path(request.url.path)
+
+    HTTP_REQUESTS_TOTAL.labels(
+        method=request.method,
+        endpoint=endpoint,
+        http_status=str(response.status_code)
+    ).inc()
+
+    HTTP_REQUEST_DURATION_SECONDS.labels(
+        method=request.method,
+        endpoint=endpoint
+    ).observe(duration)
+
+    return response
+
+REDIS_UP = Gauge(
+    "tradepulse_redis_up",
+    "Redis health status. 1 means up, 0 means down."
+)
+
+metrics_app = make_asgi_app()
+app.mount("/metrics", metrics_app)
 
 
 def create_order_events(db: Session, order_id: str, final_status: str):
@@ -90,7 +153,10 @@ def health_check():
 
 @app.get("/redis/health")
 def redis_health_check():
-    if check_redis_connection():
+    redis_is_up = check_redis_connection()
+    REDIS_UP.set(1 if redis_is_up else 0)
+
+    if redis_is_up:
         return {
             "status": "UP",
             "service": "tradepulse-redis"
@@ -100,7 +166,6 @@ def redis_health_check():
         "status": "DOWN",
         "service": "tradepulse-redis"
     }
-
 
 @app.get("/queue/order-events")
 def get_queued_order_events(limit: int = 10):
@@ -149,10 +214,20 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_order)
 
+    ORDERS_CREATED_TOTAL.labels(
+        source="api",
+        status=new_order.status,
+        symbol=new_order.symbol
+    ).inc()
+
+    for event in events:
+        ORDER_EVENTS_CREATED_TOTAL.labels(
+            event_type=event.event_type
+        ).inc()
+
     publish_order_events(new_order, events)
 
     return new_order
-
 
 @app.get("/orders", response_model=List[OrderResponse])
 def get_orders(db: Session = Depends(get_db)):
@@ -182,7 +257,6 @@ def get_order_events(order_id: str, db: Session = Depends(get_db)):
         .order_by(OrderEvent.created_at.asc())
         .all()
     )
-
 
 @app.post("/simulate/order", response_model=OrderResponse)
 def simulate_order(db: Session = Depends(get_db)):
@@ -220,6 +294,17 @@ def simulate_order(db: Session = Depends(get_db)):
     events = create_order_events(db, simulated_order.order_id, status)
     db.commit()
     db.refresh(simulated_order)
+
+    ORDERS_CREATED_TOTAL.labels(
+        source="simulator",
+        status=simulated_order.status,
+        symbol=simulated_order.symbol
+    ).inc()
+
+    for event in events:
+        ORDER_EVENTS_CREATED_TOTAL.labels(
+            event_type=event.event_type
+        ).inc()
 
     publish_order_events(simulated_order, events)
 
