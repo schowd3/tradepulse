@@ -35,7 +35,6 @@ The project models a simplified trading support workflow where orders are create
 
 ## Planned Features
 
-- Grafana dashboard
 - Kubernetes deployment
 - AWS deployment
 - GitHub Actions CI/CD
@@ -54,7 +53,7 @@ The project models a simplified trading support workflow where orders are create
 - Docker Compose
 - Prometheus
 - Uvicorn
-
+- Grafana
 ## API Endpoints
 
 | Method | Endpoint | Description |
