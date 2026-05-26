@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tradepulse-config
+  namespace: tradepulse
+data:
+  POSTGRES_DB: tradepulse_db
+  POSTGRES_USER: tradepulse_user
+  DATABASE_HOST: tradepulse-postgres
+  DATABASE_PORT: "5432"
+  REDIS_HOST: tradepulse-redis
+  REDIS_PORT: "6379"
