@@ -18,6 +18,27 @@ spec:
           image: redis:7
           ports:
             - containerPort: 6379
+          readinessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
 ---
 apiVersion: v1
 kind: Service
@@ -28,5 +49,6 @@ spec:
   selector:
     app: tradepulse-redis
   ports:
-    - port: 6379
+    - protocol: TCP
+      port: 6379
       targetPort: 6379

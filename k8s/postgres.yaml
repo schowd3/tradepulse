@@ -46,6 +46,37 @@ spec:
                 secretKeyRef:
                   name: tradepulse-secret
                   key: POSTGRES_PASSWORD
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - tradepulse_user
+                - -d
+                - tradepulse_db
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - tradepulse_user
+                - -d
+                - tradepulse_db
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
           volumeMounts:
             - name: postgres-storage
               mountPath: /var/lib/postgresql/data
@@ -63,5 +94,6 @@ spec:
   selector:
     app: tradepulse-postgres
   ports:
-    - port: 5432
+    - protocol: TCP
+      port: 5432
       targetPort: 5432
