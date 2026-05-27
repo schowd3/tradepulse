@@ -32,6 +32,10 @@ The project models a simplified trading support workflow where orders are create
 - Order count metrics by source, status, and symbol
 - Order lifecycle event metrics
 - Redis health gauge
+- Kubernetes deployment manifests for API, PostgreSQL, and Redis
+- Kubernetes liveness and readiness probes
+- Kubernetes CPU and memory requests/limits
+- Kubernetes ConfigMap, Secret, Service, Deployment, and PersistentVolumeClaim configuration
 
 ## Planned Features
 
@@ -54,6 +58,8 @@ The project models a simplified trading support workflow where orders are create
 - Prometheus
 - Uvicorn
 - Grafana
+- Kubernetes
+  
 ## API Endpoints
 
 | Method | Endpoint | Description |
