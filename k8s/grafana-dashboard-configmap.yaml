@@ -1,0 +1,165 @@
+﻿apiVersion: v1
+data:
+  tradepulse-dashboard.json: |-
+    {
+      "uid": "tradepulse-dashboard",
+      "title": "TradePulse Production Monitoring",
+      "tags": ["tradepulse", "trading", "fastapi", "prometheus"],
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "5s",
+      "panels": [
+        {
+          "id": 1,
+          "type": "stat",
+          "title": "Total Orders Created",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "expr": "sum(tradepulse_orders_created_total)",
+              "legendFormat": "Total Orders"
+            }
+          ],
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": 2,
+          "type": "stat",
+          "title": "Redis Health",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "expr": "tradepulse_redis_up",
+              "legendFormat": "Redis Up"
+            }
+          ],
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 6,
+            "y": 0
+          }
+        },
+        {
+          "id": 3,
+          "type": "timeseries",
+          "title": "API Request Rate",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(tradepulse_http_requests_total[1m])) by (endpoint)",
+              "legendFormat": "{{endpoint}}"
+            }
+          ],
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 4
+          }
+        },
+        {
+          "id": 4,
+          "type": "barchart",
+          "title": "Orders by Status",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "expr": "sum by (status) (tradepulse_orders_created_total)",
+              "legendFormat": "{{status}}"
+            }
+          ],
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 0
+          }
+        },
+        {
+          "id": 5,
+          "type": "barchart",
+          "title": "Orders by Source",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "expr": "sum by (source) (tradepulse_orders_created_total)",
+              "legendFormat": "{{source}}"
+            }
+          ],
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 12
+          }
+        },
+        {
+          "id": 6,
+          "type": "timeseries",
+          "title": "P95 API Latency by Endpoint",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(tradepulse_http_request_duration_seconds_bucket[5m])) by (le, endpoint))",
+              "legendFormat": "{{endpoint}}"
+            }
+          ],
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 8
+          }
+        },
+        {
+          "id": 7,
+          "type": "barchart",
+          "title": "Order Lifecycle Events",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "expr": "sum by (event_type) (tradepulse_order_events_created_total)",
+              "legendFormat": "{{event_type}}"
+            }
+          ],
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 20
+          }
+        }
+      ]
+    }
+kind: ConfigMap
+metadata:
+  name: tradepulse-grafana-dashboard
+  namespace: tradepulse

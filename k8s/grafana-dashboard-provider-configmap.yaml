@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tradepulse-grafana-dashboard-provider
+  namespace: tradepulse
+data:
+  dashboard.yml: |
+    apiVersion: 1
+
+    providers:
+      - name: TradePulse Dashboards
+        orgId: 1
+        folder: TradePulse
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards
