@@ -36,4 +36,8 @@ jobs:
 
       - name: Validate Kubernetes manifests
         run: |
-          kubectl apply --dry-run=client --validate=false -f k8s/
+          docker run --rm -v "${PWD}:/workspace" ghcr.io/yannh/kubeconform:latest \
+            -strict \
+            -summary \
+            -ignore-missing-schemas \
+            /workspace/k8s
