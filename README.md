@@ -36,10 +36,14 @@ The project models a simplified trading support workflow where orders are create
 - Kubernetes liveness and readiness probes
 - Kubernetes CPU and memory requests/limits
 - Kubernetes ConfigMap, Secret, Service, Deployment, and PersistentVolumeClaim configuration
+- Grafana dashboard
+- Kubernetes deployment manifests for API, PostgreSQL, Redis, Prometheus, and Grafana
+- Kubernetes liveness and readiness probes
+- Kubernetes CPU and memory requests/limits
+- Kubernetes ConfigMap, Secret, Service, Deployment, and PersistentVolumeClaim configuration
 
 ## Planned Features
 
-- Kubernetes deployment
 - AWS deployment
 - GitHub Actions CI/CD
 - Automated tests
