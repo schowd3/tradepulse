@@ -2,16 +2,41 @@
 
 TradePulse is a production-style trading support and monitoring application built to simulate order flow, expose support APIs, and demonstrate cloud-native deployment practices.
 
-The project models a simplified trading support workflow where orders are created, evaluated against simulated market data, persisted to PostgreSQL, published to Redis as lifecycle events, and monitored through Prometheus metrics.
+The project models a simplified trading support workflow where orders are created, evaluated against simulated market data, persisted to PostgreSQL, published to Redis as lifecycle events, and monitored through Prometheus and Grafana.
+
+This project is designed to show practical production engineering concepts used in trading systems, including API health checks, order lifecycle tracking, event queues, observability, containerization, Kubernetes deployment, and CI/CD.
+
+---
+
+## What TradePulse Demonstrates
+
+TradePulse is not a real trading system. It is a portfolio project that simulates the types of workflows production support, SRE, DevOps, and backend engineers may support in financial technology environments.
+
+It demonstrates:
+
+- FastAPI-based backend development
+- Trading/order workflow simulation
+- PostgreSQL persistence
+- Redis Streams for event queueing
+- Prometheus metrics
+- Grafana dashboards
+- Docker Compose local orchestration
+- Kubernetes manifests
+- Kubernetes liveness and readiness probes
+- Kubernetes CPU and memory requests/limits
+- GitHub Actions CI
+- Docker image publishing to Amazon ECR
+
+---
 
 ## Current Features
+
+### API and Trading Workflow
 
 - FastAPI backend
 - Swagger API documentation
 - Order creation API
 - Simulated trade/order event generator
-- PostgreSQL persistence
-- SQLAlchemy ORM models
 - Market data simulator with bid/ask prices
 - Basic order status engine
   - BUY orders fill when price crosses the ask
@@ -22,8 +47,16 @@ The project models a simplified trading support workflow where orders are create
   - ORDER_ACKED
   - ORDER_FILLED
   - ORDER_REJECTED
-- Redis event queue using Redis Streams
-- Docker Compose local environment
+
+### Persistence and Event Queue
+
+- PostgreSQL database persistence
+- SQLAlchemy ORM models
+- Redis Streams event queue
+- API endpoint for recent queued order events
+
+### Observability
+
 - Health check endpoints
   - API health
   - Redis health
@@ -32,67 +65,68 @@ The project models a simplified trading support workflow where orders are create
 - Order count metrics by source, status, and symbol
 - Order lifecycle event metrics
 - Redis health gauge
-- Kubernetes deployment manifests for API, PostgreSQL, and Redis
-- Kubernetes liveness and readiness probes
-- Kubernetes CPU and memory requests/limits
-- Kubernetes ConfigMap, Secret, Service, Deployment, and PersistentVolumeClaim configuration
 - Grafana dashboard
-- Kubernetes deployment manifests for API, PostgreSQL, Redis, Prometheus, and Grafana
+- Provisioned Prometheus datasource
+- Provisioned TradePulse monitoring dashboard
+
+### Docker and Kubernetes
+
+- Dockerfile for the FastAPI application
+- Docker Compose stack for local development
+- Kubernetes deployment manifests for:
+  - API
+  - PostgreSQL
+  - Redis
+  - Prometheus
+  - Grafana
+- Kubernetes Namespace, ConfigMap, Secret, Service, Deployment, and PersistentVolumeClaim configuration
 - Kubernetes liveness and readiness probes
 - Kubernetes CPU and memory requests/limits
-- Kubernetes ConfigMap, Secret, Service, Deployment, and PersistentVolumeClaim configuration
+
+### CI/CD and AWS Image Publishing
+
 - GitHub Actions CI workflow
-- Automated Docker image build
-- Automated push to Amazon ECR on main branch updates
-- AWS OIDC-based GitHub Actions authentication
+- Python dependency installation and source compilation
+- Docker image build validation
+- Kubernetes manifest validation with kubeconform
+- Automated Docker image push to Amazon ECR using GitHub Actions and AWS OIDC
 
-## Planned Features
-
-- AWS deployment
-- GitHub Actions CI/CD
-- Automated tests
-- Alembic database migrations
-- Background worker for asynchronous order event processing
+---
 
 ## Tech Stack
 
 - Python
 - FastAPI
+- Uvicorn
 - PostgreSQL
 - SQLAlchemy
 - Redis
+- Prometheus
+- Grafana
 - Docker
 - Docker Compose
-- Prometheus
-- Uvicorn
-- Grafana
 - Kubernetes
 - GitHub Actions
 - AWS ECR
 - AWS IAM OIDC
-  
-## API Endpoints
 
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/health` | Check API health |
-| GET | `/redis/health` | Check Redis connectivity |
-| GET | `/market-data` | View all simulated market data |
-| GET | `/market-data/{symbol}` | View market data for one symbol |
-| POST | `/orders` | Create a new order |
-| GET | `/orders` | Retrieve all orders |
-| GET | `/orders/{order_id}` | Retrieve a specific order |
-| GET | `/orders/{order_id}/events` | Retrieve lifecycle events for an order |
-| POST | `/simulate/order` | Generate a simulated trading order |
-| GET | `/queue/order-events` | View recent Redis queued order events |
-| GET | `/metrics` | Prometheus metrics endpoint |
+---
 
-## Order Status Logic
-
-TradePulse uses a simplified matching/status engine.
-
-Example market data:
-
-```text
-AAPL bid = 184.90
-AAPL ask = 185.10
+## Project Architecture 
+Client / Swagger UI
+        |
+        v
+FastAPI TradePulse API
+        |
+        |--- PostgreSQL
+        |       Stores orders and lifecycle events
+        |
+        |--- Redis Streams
+        |       Publishes order lifecycle events
+        |
+        |--- Prometheus /metrics
+                Exposes application metrics
+                    |
+                    v
+                Grafana Dashboard
+            
