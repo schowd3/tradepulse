@@ -41,6 +41,10 @@ The project models a simplified trading support workflow where orders are create
 - Kubernetes liveness and readiness probes
 - Kubernetes CPU and memory requests/limits
 - Kubernetes ConfigMap, Secret, Service, Deployment, and PersistentVolumeClaim configuration
+- GitHub Actions CI workflow
+- Automated Docker image build
+- Automated push to Amazon ECR on main branch updates
+- AWS OIDC-based GitHub Actions authentication
 
 ## Planned Features
 
@@ -63,6 +67,9 @@ The project models a simplified trading support workflow where orders are create
 - Uvicorn
 - Grafana
 - Kubernetes
+- GitHub Actions
+- AWS ECR
+- AWS IAM OIDC
   
 ## API Endpoints
 
