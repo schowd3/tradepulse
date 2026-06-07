@@ -112,7 +112,9 @@ It demonstrates:
 
 ---
 
-## Project Architecture 
+## Project Architecture
+
+```text
 Client / Swagger UI
         |
         v
@@ -129,4 +131,3 @@ FastAPI TradePulse API
                     |
                     v
                 Grafana Dashboard
-            
