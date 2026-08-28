@@ -6,3 +6,7 @@ psycopg2-binary
 python-dotenv
 redis
 prometheus-client
+pytest
+pytest-asyncio
+httpx
+aiofiles
